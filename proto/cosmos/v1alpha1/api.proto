@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package cosmos.v1alpha1;
+option go_package = "github.com/bbengfort/cosmos/pkg/pb/v1alpha;pb";
+
+
+service Cosmos {
+    rpc Login(Auth) returns (AuthToken) {}
+}
+
+
+message Auth {
+    string username = 1;
+    string password = 2;
+}
+
+message AuthToken {
+    string access_token = 1;
+    string refresh_token = 2;
+}
