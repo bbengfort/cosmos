@@ -4,8 +4,8 @@ import "fmt"
 
 // Version components.
 const (
-	VersionMajor  = 1
-	VersionMinor  = 0
+	VersionMajor  = 0
+	VersionMinor  = 1
 	VersionPatch  = 0
 	VersionSerial = 0
 )

@@ -11,6 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // CosmosClient is the client API for Cosmos service.
@@ -62,7 +63,7 @@ type UnsafeCosmosServer interface {
 }
 
 func RegisterCosmosServer(s grpc.ServiceRegistrar, srv CosmosServer) {
-	s.RegisterService(&_Cosmos_serviceDesc, srv)
+	s.RegisterService(&Cosmos_ServiceDesc, srv)
 }
 
 func _Cosmos_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -83,7 +84,10 @@ func _Cosmos_Login_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Cosmos_serviceDesc = grpc.ServiceDesc{
+// Cosmos_ServiceDesc is the grpc.ServiceDesc for Cosmos service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Cosmos_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "cosmos.v1alpha1.Cosmos",
 	HandlerType: (*CosmosServer)(nil),
 	Methods: []grpc.MethodDesc{

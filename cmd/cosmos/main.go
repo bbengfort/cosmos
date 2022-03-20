@@ -10,7 +10,6 @@ import (
 
 	"github.com/bbengfort/cosmos/pkg"
 	pb "github.com/bbengfort/cosmos/pkg/pb/v1alpha"
-	"github.com/bbengfort/cosmos/pkg/server"
 	cli "github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -23,7 +22,7 @@ var (
 func main() {
 	app := cli.NewApp()
 	app.Name = "cosmos"
-	app.Usage = "management commands for a Cosmos game server"
+	app.Usage = "interact with the cosmos game server"
 	app.Version = pkg.Version()
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
@@ -42,20 +41,6 @@ func main() {
 		},
 	}
 	app.Commands = []*cli.Command{
-		{
-			Name:     "serve",
-			Usage:    "run the cosmos service",
-			Category: "server",
-			Action:   serve,
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:    "addr",
-					Aliases: []string{"a"},
-					Usage:   "specify the address and port to bind the server on",
-					Value:   ":8088",
-				},
-			},
-		},
 		{
 			Name:     "login",
 			Usage:    "login to the cosmos service",
@@ -81,19 +66,6 @@ func main() {
 }
 
 //===========================================================================
-// Server Actions
-//===========================================================================
-
-func serve(c *cli.Context) (err error) {
-	srv := server.New()
-	addr := c.String("addr")
-	if err = srv.Serve(addr); err != nil {
-		return cli.NewExitError(err, 1)
-	}
-	return nil
-}
-
-//===========================================================================
 // Client Actions
 //===========================================================================
 
@@ -108,7 +80,7 @@ func login(c *cli.Context) (err error) {
 
 	var tokens *pb.AuthToken
 	if tokens, err = client.Login(ctx, auth); err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	return printJSON(tokens)
@@ -130,7 +102,7 @@ func initClient(c *cli.Context) (err error) {
 
 	var cc *grpc.ClientConn
 	if cc, err = grpc.Dial(c.String("endpoint"), opts...); err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 	client = pb.NewCosmosClient(cc)
 	return nil
@@ -140,7 +112,7 @@ func initClient(c *cli.Context) (err error) {
 func printJSON(v interface{}) error {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		return cli.NewExitError(err, 1)
+		return cli.Exit(err, 1)
 	}
 
 	fmt.Println(string(data))
