@@ -14,6 +14,7 @@ import (
 	cli "github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -137,12 +138,15 @@ func status(c *cli.Context) (err error) {
 // helper function to create the GRPC client with default options
 func initClient(c *cli.Context) (err error) {
 	var opts []grpc.DialOption
+
+	var creds credentials.TransportCredentials
 	if c.Bool("no-secure") {
-		opts = append(opts, grpc.WithInsecure())
+		creds = insecure.NewCredentials()
 	} else {
 		config := &tls.Config{}
-		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(config)))
+		creds = credentials.NewTLS(config)
 	}
+	opts = append(opts, grpc.WithTransportCredentials(creds))
 
 	var cc *grpc.ClientConn
 	if cc, err = grpc.Dial(c.String("endpoint"), opts...); err != nil {

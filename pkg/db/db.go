@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bbengfort/cosmos/pkg/config"
 	_ "github.com/lib/pq"
 )
 
@@ -26,14 +27,14 @@ var (
 // Connect to the Postgres stabase specified by theDSN. Connecting in read-only mode is
 //is managed by the package, not by the database. Multiple or concurrent calls to
 // Connect will be ignored even if a different configuration is passed.
-func Connect(dsn string, readOnly bool) (err error) {
+func Connect(conf config.DatabaseConfig) (err error) {
 	// Guard against concurrent Connect and Close
 	connmu.Lock()
 
 	// Ensure that the connect function is only called once.
 	connect.Do(func() {
-		readonly = readOnly
-		if conn, err = sql.Open("postgres", dsn); err != nil {
+		readonly = conf.ReadOnly
+		if conn, err = sql.Open("postgres", conf.URL); err != nil {
 			return
 		}
 

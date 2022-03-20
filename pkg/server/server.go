@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/bbengfort/cosmos/pkg"
+	"github.com/bbengfort/cosmos/pkg/auth"
 	"github.com/bbengfort/cosmos/pkg/config"
+	"github.com/bbengfort/cosmos/pkg/db"
 	"github.com/bbengfort/cosmos/pkg/db/schema"
 	pb "github.com/bbengfort/cosmos/pkg/pb/v1alpha"
 	"github.com/rs/zerolog"
@@ -25,6 +27,7 @@ func init() {
 type Server struct {
 	pb.UnimplementedCosmosServer
 	conf    config.Config
+	tokens  *auth.TokenManager
 	srv     *grpc.Server
 	started time.Time
 	echan   chan error
@@ -59,6 +62,15 @@ func New(conf config.Config) (s *Server, err error) {
 	s.srv = grpc.NewServer(opts...)
 	pb.RegisterCosmosServer(s.srv, s)
 
+	// At this point, if we're in maintenance mode, we're done setting up
+	if conf.Maintenance {
+		return s, nil
+	}
+
+	// Perform all setup and configuration that is required when not in maintenance mode
+	if s.tokens, err = auth.New(s.conf.Auth.TokenKeys, s.conf.Auth.Audience); err != nil {
+		return nil, err
+	}
 	return s, nil
 }
 
@@ -80,6 +92,11 @@ func (s *Server) Serve() (err error) {
 		err = schema.Wait(ctx, s.conf.Database.URL)
 		cancel()
 		if err != nil {
+			return err
+		}
+
+		// Connect to the database
+		if err = db.Connect(s.conf.Database); err != nil {
 			return err
 		}
 	}

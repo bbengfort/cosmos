@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -11,7 +12,9 @@ import (
 	"path/filepath"
 
 	"github.com/bbengfort/cosmos/pkg"
+	"github.com/bbengfort/cosmos/pkg/auth"
 	"github.com/bbengfort/cosmos/pkg/config"
+	"github.com/bbengfort/cosmos/pkg/db"
 	"github.com/bbengfort/cosmos/pkg/db/schema"
 	"github.com/bbengfort/cosmos/pkg/server"
 	"github.com/joho/godotenv"
@@ -81,6 +84,29 @@ func main() {
 				&cli.BoolFlag{
 					Name:    "verify",
 					Aliases: []string{"v"},
+				},
+			},
+		},
+		{
+			Name:     "register",
+			Usage:    "register a user with the cosmos app",
+			Category: "users",
+			Action:   registerUser,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "username",
+					Aliases: []string{"u", "name"},
+					Usage:   "the unique username to identify the user",
+				},
+				&cli.StringFlag{
+					Name:    "email",
+					Aliases: []string{"e"},
+					Usage:   "the unique email to send emails on",
+				},
+				&cli.StringFlag{
+					Name:    "password",
+					Aliases: []string{"p"},
+					Usage:   "the password for the user",
 				},
 			},
 		},
@@ -178,6 +204,38 @@ func schemaVersion(c *cli.Context) (err error) {
 		return cli.Exit(err, 1)
 	}
 	return printJSON(vers)
+}
+
+//===========================================================================
+// User Actions
+//===========================================================================
+
+func registerUser(c *cli.Context) (err error) {
+	var username, email, password string
+	if username = c.String("username"); username == "" {
+		return cli.Exit("specify username", 1)
+	}
+	if email = c.String("email"); email == "" {
+		return cli.Exit("specify email", 1)
+	}
+	if password = c.String("password"); password == "" {
+		return cli.Exit("specify password", 1)
+	}
+
+	var conf config.Config
+	if conf, err = config.New(); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	if err = db.Connect(conf.Database); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	var user *auth.User
+	if user, err = auth.Register(context.Background(), username, email, password); err != nil {
+		return cli.Exit(err, 1)
+	}
+	return printJSON(user)
 }
 
 //===========================================================================
