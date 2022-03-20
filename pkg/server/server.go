@@ -48,8 +48,12 @@ func New(conf config.Config) (s *Server, err error) {
 	// Create the server and prepare to serve
 	s = &Server{conf: conf, echan: make(chan error, 1)}
 
-	// Create and register the gRPC server
+	// Create the gRPC server options
 	opts := make([]grpc.ServerOption, 0, 2)
+	opts = append(opts, s.UnaryInterceptors())
+	opts = append(opts, s.StreamInterceptors())
+
+	// Create and register the gRPC server
 	s.srv = grpc.NewServer(opts...)
 	pb.RegisterCosmosServer(s.srv, s)
 
