@@ -10,12 +10,17 @@ import (
 	"path/filepath"
 
 	"github.com/bbengfort/cosmos/pkg"
+	"github.com/bbengfort/cosmos/pkg/config"
 	"github.com/bbengfort/cosmos/pkg/server"
+	"github.com/joho/godotenv"
 	"github.com/segmentio/ksuid"
 	cli "github.com/urfave/cli/v2"
 )
 
 func main() {
+	// Load the dotenv file
+	godotenv.Load()
+
 	app := cli.NewApp()
 	app.Name = "celeste"
 	app.Usage = "management commands for a cosmos game server"
@@ -31,7 +36,7 @@ func main() {
 					Name:    "addr",
 					Aliases: []string{"a"},
 					Usage:   "specify the address and port to bind the server on",
-					Value:   ":8088",
+					Value:   ":10001",
 				},
 			},
 		},
@@ -64,9 +69,22 @@ func main() {
 //===========================================================================
 
 func serve(c *cli.Context) (err error) {
-	srv := server.New()
-	addr := c.String("addr")
-	if err = srv.Serve(addr); err != nil {
+	var conf config.Config
+	if conf, err = config.New(); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	// Update the configuration from the CLI flags
+	if addr := c.String("addr"); addr != "" {
+		conf.BindAddr = addr
+	}
+
+	var srv *server.Server
+	if srv, err = server.New(conf); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	if err = srv.Serve(); err != nil {
 		return cli.Exit(err, 1)
 	}
 	return nil

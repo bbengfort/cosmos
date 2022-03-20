@@ -10,9 +10,11 @@ import (
 
 	"github.com/bbengfort/cosmos/pkg"
 	pb "github.com/bbengfort/cosmos/pkg/pb/v1alpha"
+	"github.com/joho/godotenv"
 	cli "github.com/urfave/cli/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (
@@ -20,10 +22,14 @@ var (
 )
 
 func main() {
+	// Load the dotenv file
+	godotenv.Load()
+
 	app := cli.NewApp()
 	app.Name = "cosmos"
 	app.Usage = "interact with the cosmos game server"
 	app.Version = pkg.Version()
+	app.Before = initClient
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{
 			Name:    "no-secure",
@@ -37,7 +43,7 @@ func main() {
 			Aliases: []string{"u"},
 			Usage:   "endpoint to connect to the Cosmos service on",
 			EnvVars: []string{"COSMOS_CLIENT_URL"},
-			Value:   "localhost:8088",
+			Value:   "localhost:10001",
 		},
 	}
 	app.Commands = []*cli.Command{
@@ -45,7 +51,6 @@ func main() {
 			Name:     "login",
 			Usage:    "login to the cosmos service",
 			Category: "client",
-			Before:   initClient,
 			Action:   login,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -57,6 +62,25 @@ func main() {
 					Name:    "password",
 					Aliases: []string{"p"},
 					Usage:   "the password to login with",
+				},
+			},
+		},
+		{
+			Name:     "status",
+			Usage:    "check the status of the cosmos service",
+			Category: "client",
+			Action:   status,
+			Flags: []cli.Flag{
+				&cli.Uint64Flag{
+					Name:    "attempts",
+					Aliases: []string{"a"},
+					Usage:   "specify a number of attempts to send to the server (optional)",
+				},
+				&cli.TimestampFlag{
+					Name:    "last-checked-at",
+					Aliases: []string{"t", "timestamp"},
+					Usage:   "specify a last checked at timestamp (optional)",
+					Layout:  time.RFC3339,
 				},
 			},
 		},
@@ -84,6 +108,26 @@ func login(c *cli.Context) (err error) {
 	}
 
 	return printJSON(tokens)
+}
+
+func status(c *cli.Context) (err error) {
+	req := &pb.HealthCheck{
+		Attempts: uint32(c.Uint64("attempts")),
+	}
+
+	if ts := c.Timestamp("last-checked-at"); ts != nil && !ts.IsZero() {
+		req.LastCheckedAt = timestamppb.New(*ts)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	var rep *pb.SystemStatus
+	if rep, err = client.Status(ctx, req); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	return printJSON(rep)
 }
 
 //===========================================================================

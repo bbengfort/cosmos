@@ -19,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CosmosClient interface {
 	Login(ctx context.Context, in *Auth, opts ...grpc.CallOption) (*AuthToken, error)
+	Status(ctx context.Context, in *HealthCheck, opts ...grpc.CallOption) (*SystemStatus, error)
 }
 
 type cosmosClient struct {
@@ -38,11 +39,21 @@ func (c *cosmosClient) Login(ctx context.Context, in *Auth, opts ...grpc.CallOpt
 	return out, nil
 }
 
+func (c *cosmosClient) Status(ctx context.Context, in *HealthCheck, opts ...grpc.CallOption) (*SystemStatus, error) {
+	out := new(SystemStatus)
+	err := c.cc.Invoke(ctx, "/cosmos.v1alpha1.Cosmos/Status", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CosmosServer is the server API for Cosmos service.
 // All implementations must embed UnimplementedCosmosServer
 // for forward compatibility
 type CosmosServer interface {
 	Login(context.Context, *Auth) (*AuthToken, error)
+	Status(context.Context, *HealthCheck) (*SystemStatus, error)
 	mustEmbedUnimplementedCosmosServer()
 }
 
@@ -52,6 +63,9 @@ type UnimplementedCosmosServer struct {
 
 func (UnimplementedCosmosServer) Login(context.Context, *Auth) (*AuthToken, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedCosmosServer) Status(context.Context, *HealthCheck) (*SystemStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Status not implemented")
 }
 func (UnimplementedCosmosServer) mustEmbedUnimplementedCosmosServer() {}
 
@@ -84,6 +98,24 @@ func _Cosmos_Login_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Cosmos_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheck)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CosmosServer).Status(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cosmos.v1alpha1.Cosmos/Status",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CosmosServer).Status(ctx, req.(*HealthCheck))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Cosmos_ServiceDesc is the grpc.ServiceDesc for Cosmos service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -94,6 +126,10 @@ var Cosmos_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _Cosmos_Login_Handler,
+		},
+		{
+			MethodName: "Status",
+			Handler:    _Cosmos_Status_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
