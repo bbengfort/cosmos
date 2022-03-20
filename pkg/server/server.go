@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net"
 	"os"
 	"os/signal"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/bbengfort/cosmos/pkg"
 	"github.com/bbengfort/cosmos/pkg/config"
+	"github.com/bbengfort/cosmos/pkg/db/schema"
 	pb "github.com/bbengfort/cosmos/pkg/pb/v1alpha"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -72,6 +74,14 @@ func (s *Server) Serve() (err error) {
 
 	if s.conf.Maintenance {
 		log.Warn().Msg("starting cosmos server in maintenance mode")
+	} else {
+		// Wait for the database to be at the correct schema
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		err = schema.Wait(ctx, s.conf.Database.URL)
+		cancel()
+		if err != nil {
+			return err
+		}
 	}
 
 	// Set the started timestamp for uptime requests

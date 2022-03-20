@@ -12,8 +12,14 @@ type Config struct {
 	LogLevel    LevelDecoder `split_words:"true" default:"info"`
 	ConsoleLog  bool         `split_words:"true" default:"false"`
 	BindAddr    string       `split_words:"true" default:"10001"`
+	Database    DatabaseConfig
 	Auth        AuthConfig
 	processed   bool
+}
+
+type DatabaseConfig struct {
+	URL      string `split_words:"true" required:"true"`
+	ReadOnly bool   `split_words:"true" default:"false"`
 }
 
 type AuthConfig struct {

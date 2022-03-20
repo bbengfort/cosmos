@@ -10,12 +10,14 @@ import (
 )
 
 var testEnv = map[string]string{
-	"COSMOS_MAINTENANCE":     "true",
-	"COSMOS_LOG_LEVEL":       "debug",
-	"COSMOS_CONSOLE_LOG":     "true",
-	"COSMOS_BIND_ADDR":       ":443",
-	"COSMOS_AUTH_TOKEN_KEYS": "26eyytIJDwcp4ldjJTGVmsl3nEl:testdata/key1.pem,26eyzpOJMcQQCBWmIcS4mUscBPZ:testdata/key2.pem",
-	"COSMOS_AUTH_AUDIENCE":   "cosmos.bengfort.com:443",
+	"COSMOS_MAINTENANCE":        "true",
+	"COSMOS_LOG_LEVEL":          "debug",
+	"COSMOS_CONSOLE_LOG":        "true",
+	"COSMOS_BIND_ADDR":          ":443",
+	"COSMOS_DATABASE_URL":       "postgres://localhost:5432/cosmos?sslmode=disable",
+	"COSMOS_DATABASE_READ_ONLY": "true",
+	"COSMOS_AUTH_TOKEN_KEYS":    "26eyytIJDwcp4ldjJTGVmsl3nEl:testdata/key1.pem,26eyzpOJMcQQCBWmIcS4mUscBPZ:testdata/key2.pem",
+	"COSMOS_AUTH_AUDIENCE":      "cosmos.bengfort.com:443",
 }
 
 func TestConfig(t *testing.T) {
@@ -41,12 +43,15 @@ func TestConfig(t *testing.T) {
 	require.Equal(t, zerolog.DebugLevel, conf.GetLogLevel())
 	require.Equal(t, true, conf.ConsoleLog)
 	require.Equal(t, testEnv["COSMOS_BIND_ADDR"], conf.BindAddr)
+	require.Equal(t, testEnv["COSMOS_DATABASE_URL"], conf.Database.URL)
+	require.Equal(t, true, conf.Database.ReadOnly)
 	require.Len(t, conf.Auth.TokenKeys, 2)
 	require.Equal(t, testEnv["COSMOS_AUTH_AUDIENCE"], conf.Auth.Audience)
 }
 
 func TestRequiredConfig(t *testing.T) {
 	required := []string{
+		"COSMOS_DATABASE_URL",
 		"COSMOS_AUTH_TOKEN_KEYS",
 	}
 

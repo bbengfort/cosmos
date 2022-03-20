@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/bbengfort/cosmos/pkg"
 	"github.com/bbengfort/cosmos/pkg/config"
+	"github.com/bbengfort/cosmos/pkg/db/schema"
 	"github.com/bbengfort/cosmos/pkg/server"
 	"github.com/joho/godotenv"
 	"github.com/segmentio/ksuid"
@@ -37,6 +39,48 @@ func main() {
 					Aliases: []string{"a"},
 					Usage:   "specify the address and port to bind the server on",
 					Value:   ":10001",
+				},
+			},
+		},
+		{
+			Name:     "migrate",
+			Usage:    "migrate the database to the latest schema version",
+			Category: "database",
+			Action:   migrate,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "dsn",
+					Aliases: []string{"d", "db"},
+					Usage:   "database dsn to connect to the database on",
+					EnvVars: []string{"DATABASE_URL", "COSMOS_DATABASE_URL"},
+				},
+				&cli.BoolFlag{
+					Name:    "force",
+					Aliases: []string{"f"},
+					Usage:   "force the latest schema version to be applied",
+				},
+				&cli.BoolFlag{
+					Name:    "drop",
+					Aliases: []string{"D"},
+					Usage:   "drop the database schema before migrating (force must be true)",
+				},
+			},
+		},
+		{
+			Name:     "schema",
+			Usage:    "get the current version of the database schema",
+			Category: "database",
+			Action:   schemaVersion,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "dsn",
+					Aliases: []string{"d", "db"},
+					Usage:   "database dsn to connect to the database on",
+					EnvVars: []string{"DATABASE_URL", "COSMOS_DATABASE_URL"},
+				},
+				&cli.BoolFlag{
+					Name:    "verify",
+					Aliases: []string{"v"},
 				},
 			},
 		},
@@ -90,6 +134,56 @@ func serve(c *cli.Context) (err error) {
 	return nil
 }
 
+//===========================================================================
+// Database Actions
+//===========================================================================
+
+func migrate(c *cli.Context) (err error) {
+	if err = schema.Configure(c.String("dsn")); err != nil {
+		return cli.Exit(err, 1)
+	}
+	defer schema.Close()
+
+	if c.Bool("drop") {
+		if !c.Bool("force") {
+			return cli.Exit("cannot drop without forcing", 1)
+		}
+		if err = schema.Drop(); err != nil {
+			return cli.Exit(err, 1)
+		}
+	}
+
+	if c.Bool("force") {
+		if err = schema.Force(); err != nil {
+			return cli.Exit(err, 1)
+		}
+	} else {
+		if err = schema.Migrate(); err != nil {
+			return cli.Exit(err, 1)
+		}
+	}
+	return nil
+}
+
+func schemaVersion(c *cli.Context) (err error) {
+	defer schema.Close()
+	if c.Bool("verify") {
+		if err = schema.Verify(c.String("dsn")); err != nil {
+			return cli.Exit(err, 1)
+		}
+	}
+
+	var vers *schema.Version
+	if vers, err = schema.CurrentVersion(c.String("dsn")); err != nil {
+		return cli.Exit(err, 1)
+	}
+	return printJSON(vers)
+}
+
+//===========================================================================
+// Administrative Actions
+//===========================================================================
+
 func generateTokenKey(c *cli.Context) (err error) {
 	var keyid ksuid.KSUID
 	if keyid, err = ksuid.NewRandom(); err != nil {
@@ -116,5 +210,20 @@ func generateTokenKey(c *cli.Context) (err error) {
 	}
 
 	fmt.Printf("RSA key id: %s -- saved with PEM encoding to %s\n", keyid, out)
+	return nil
+}
+
+//===========================================================================
+// Helper Functions
+//===========================================================================
+
+// helper function to print JSON response and exit
+func printJSON(v interface{}) error {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	fmt.Println(string(data))
 	return nil
 }
