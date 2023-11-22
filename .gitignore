@@ -15,5 +15,5 @@
 # vendor/
 
 # Application dependencies
+.secret
 .env
-fixtures/
