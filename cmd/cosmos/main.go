@@ -7,6 +7,7 @@ import (
 
 	"github.com/bbengfort/cosmos/pkg"
 	"github.com/bbengfort/cosmos/pkg/config"
+	"github.com/bbengfort/cosmos/pkg/cosmos"
 	"github.com/joho/godotenv"
 	confire "github.com/rotationalio/confire/usage"
 	"github.com/urfave/cli/v2"
@@ -48,7 +49,20 @@ func main() {
 	}
 }
 
-func serve(c *cli.Context) error {
+func serve(c *cli.Context) (err error) {
+	var conf config.Config
+	if conf, err = config.New(); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	var srv *cosmos.Server
+	if srv, err = cosmos.New(conf); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	if err = srv.Serve(); err != nil {
+		return cli.Exit(err, 1)
+	}
 	return nil
 }
 

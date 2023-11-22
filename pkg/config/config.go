@@ -13,7 +13,7 @@ const Prefix = "cosmos"
 
 type Config struct {
 	Maintenance  bool                `default:"false" desc:"sets the server to maintenance mode if true"`
-	BindAddr     string              `split_words:"true" default:":8888" desc:"the ip address and port to bind the server to""`
+	BindAddr     string              `split_words:"true" default:":8888" desc:"the ip address and port to bind the server to"`
 	Mode         string              `default:"release" desc:"one of debug, test, or release"`
 	LogLevel     logger.LevelDecoder `split_words:"true" default:"info" desc:"the verbosity of logging"`
 	ConsoleLog   bool                `split_words:"true" default:"false" desc:"human readable instead of json logging"`

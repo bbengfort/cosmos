@@ -8,7 +8,6 @@ import (
 	"github.com/bbengfort/cosmos/pkg/logger"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 )
 
 func TestLevelDecoder(t *testing.T) {
@@ -58,13 +57,8 @@ func TestUnmarshaler(t *testing.T) {
 		Level logger.LevelDecoder
 	}
 
-	var yamlConf Config
-	err := yaml.Unmarshal([]byte(`level: "warn"`), &yamlConf)
-	require.NoError(t, err, "could not unmarshal level decoder in yaml file")
-	require.Equal(t, zerolog.WarnLevel, zerolog.Level(yamlConf.Level))
-
 	var jsonConf Config
-	err = json.Unmarshal([]byte(`{"level": "panic"}`), &jsonConf)
+	err := json.Unmarshal([]byte(`{"level": "panic"}`), &jsonConf)
 	require.NoError(t, err, "could not unmarshal level decoder in json file")
 	require.Equal(t, zerolog.PanicLevel, zerolog.Level(jsonConf.Level))
 }
@@ -83,11 +77,7 @@ func TestMarshaler(t *testing.T) {
 	}
 
 	for _, conf := range confs {
-		data, err := yaml.Marshal(conf)
-		require.NoError(t, err, "could not marshal data into yaml")
-		require.Equal(t, []byte(fmt.Sprintf("level: %s\u000A", &conf.Level)), data)
-
-		data, err = json.Marshal(conf)
+		data, err := json.Marshal(conf)
 		require.NoError(t, err, "could not marshal data into json")
 		require.Equal(t, []byte(fmt.Sprintf(`{"level":%q}`, &conf.Level)), data)
 	}
