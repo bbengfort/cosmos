@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bbengfort/cosmos/pkg/config"
+	"github.com/bbengfort/cosmos/pkg/db"
 	"github.com/bbengfort/cosmos/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
@@ -99,6 +100,14 @@ func (s *Server) Serve() (err error) {
 		s.errc <- s.Shutdown()
 	}()
 
+	if !s.conf.Maintenance {
+		// Connect to the database
+		if err = db.Connect(s.conf.Database); err != nil {
+			return err
+		}
+		log.Debug().Bool("read-only", s.conf.Database.ReadOnly).Str("dsn", s.conf.Database.URL).Msg("connected to database")
+	}
+
 	// Create a socket to listen on and infer the final URL.
 	// NOTE: if the bindaddr is 127.0.0.1:0 for testing, a random port will be assigned,
 	// manually creating the listener will allow us to determine which port.
@@ -154,12 +163,19 @@ func (s *Server) Shutdown() error {
 		errs = append(errs, err)
 	}
 
+	if !s.conf.Maintenance {
+		if err := db.Close(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
 	switch len(errs) {
 	case 0:
 		return nil
 	case 1:
 		return errs[0]
 	default:
+		log.Warn().Errs("errors", errs).Msg("shutdown errors occurred")
 		return fmt.Errorf("%d errors occurred during shutdown", len(errs))
 	}
 }

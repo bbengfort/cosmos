@@ -18,7 +18,14 @@ type Config struct {
 	LogLevel     logger.LevelDecoder `split_words:"true" default:"info" desc:"the verbosity of logging"`
 	ConsoleLog   bool                `split_words:"true" default:"false" desc:"human readable instead of json logging"`
 	AllowOrigins []string            `split_words:"true" default:"http://localhost:8888" desc:"origin of website accessing API"`
+	Database     DatabaseConfig      `desc:"database configuration"`
 	processed    bool                // set when the config is properly processed from the environment
+}
+
+type DatabaseConfig struct {
+	URL      string `default:"postgres://localhost:5432/cosmos?sslmode=disable" required:"true" desc:"specify the connection to the database via a DSN"`
+	ReadOnly bool   `split_words:"true" default:"false" desc:"open the database in readonly mode"`
+	Testing  bool   `default:"false" desc:"if set to true, opens a sql mock rather than an actual db connection"`
 }
 
 func New() (conf Config, err error) {
