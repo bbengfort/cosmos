@@ -15,4 +15,13 @@ CREATE TABLE IF NOT EXISTS migrations (
     created TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Automatically update modified timestamps
+CREATE OR REPLACE FUNCTION trigger_set_modified_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.modified = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 COMMIT;
