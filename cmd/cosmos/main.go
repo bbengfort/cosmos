@@ -3,9 +3,12 @@ package main
 import (
 	"log"
 	"os"
+	"text/tabwriter"
 
 	"github.com/bbengfort/cosmos/pkg"
+	"github.com/bbengfort/cosmos/pkg/config"
 	"github.com/joho/godotenv"
+	confire "github.com/rotationalio/confire/usage"
 	"github.com/urfave/cli/v2"
 )
 
@@ -19,12 +22,24 @@ func main() {
 	app.Version = pkg.Version()
 	app.Usage = "cosmos API service and utilities"
 	app.Flags = []cli.Flag{}
-	app.Before = configure
 	app.Commands = []*cli.Command{
 		{
 			Name:   "serve",
 			Usage:  "serve the cosmos API service",
 			Action: serve,
+		},
+		{
+			Name:     "config",
+			Usage:    "print cosmos configuration guide",
+			Category: "utility",
+			Action:   usage,
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:    "list",
+					Aliases: []string{"l"},
+					Usage:   "print in list mode instead of table mode",
+				},
+			},
 		},
 	}
 
@@ -33,10 +48,21 @@ func main() {
 	}
 }
 
-func configure(c *cli.Context) error {
+func serve(c *cli.Context) error {
 	return nil
 }
 
-func serve(c *cli.Context) error {
+func usage(c *cli.Context) (err error) {
+	tabs := tabwriter.NewWriter(os.Stdout, 1, 0, 4, ' ', 0)
+	format := confire.DefaultTableFormat
+	if c.Bool("list") {
+		format = confire.DefaultListFormat
+	}
+
+	var conf config.Config
+	if err := confire.Usagef(config.Prefix, &conf, tabs, format); err != nil {
+		return cli.Exit(err, 1)
+	}
+	tabs.Flush()
 	return nil
 }
