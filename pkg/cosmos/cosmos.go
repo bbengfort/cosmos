@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/bbengfort/cosmos/pkg/auth"
 	"github.com/bbengfort/cosmos/pkg/config"
 	"github.com/bbengfort/cosmos/pkg/db"
 	"github.com/bbengfort/cosmos/pkg/logger"
@@ -54,6 +55,11 @@ func New(conf config.Config) (s *Server, err error) {
 		ready:   false,
 	}
 
+	// Create the authentication issuer
+	if s.auth, err = auth.NewIssuer(conf.Auth); err != nil {
+		return nil, err
+	}
+
 	// Create the Gin router and setup its routes
 	gin.SetMode(conf.Mode)
 	s.router = gin.New()
@@ -81,14 +87,15 @@ func New(conf config.Config) (s *Server, err error) {
 
 type Server struct {
 	sync.RWMutex
-	conf    config.Config // configuration of the API server
-	srv     *http.Server  // handle to a custom http server with specified API defaults
-	router  *gin.Engine   // the http handler and associated middlware
-	healthy bool          // application state of the server for health checks
-	ready   bool          // application state of the server for ready checks
-	started time.Time     // the timestamp when the server was started
-	url     *url.URL      // the url of the service when it's running
-	errc    chan error    // synchronize shutdown gracefully
+	conf    config.Config      // configuration of the API server
+	srv     *http.Server       // handle to a custom http server with specified API defaults
+	router  *gin.Engine        // the http handler and associated middleware
+	auth    *auth.ClaimsIssuer // used to issue and verify authentication jwt tokens
+	healthy bool               // application state of the server for health checks
+	ready   bool               // application state of the server for ready checks
+	started time.Time          // the timestamp when the server was started
+	url     *url.URL           // the url of the service when it's running
+	errc    chan error         // synchronize shutdown gracefully
 }
 
 func (s *Server) Serve() (err error) {

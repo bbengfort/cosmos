@@ -3,6 +3,7 @@ package cosmos
 import (
 	"time"
 
+	"github.com/bbengfort/cosmos/pkg/auth"
 	"github.com/bbengfort/cosmos/pkg/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,9 @@ func (s *Server) setupRoutes() (err error) {
 
 		// Mainenance mode handling
 		s.Available(),
+
+		// Reauthenticate must come before authentication
+		auth.Reauthenticate(s.auth),
 	}
 
 	// Add the middleware to the router
