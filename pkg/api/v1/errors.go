@@ -24,6 +24,7 @@ var (
 	ErrModelIDMismatch   = errors.New("resource id does not match id of endpoint")
 	ErrUnparsable        = errors.New("could not parse request")
 	ErrUnknownUserRole   = errors.New("unknown user role")
+	ErrWeakPassword      = errors.New("password must be at least 8 characters")
 )
 
 // Construct a new response for an error or simply return unsuccessful.

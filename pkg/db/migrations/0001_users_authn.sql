@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS roles (
     id          SERIAL PRIMARY KEY,
     title       VARCHAR(255) UNIQUE NOT NULL,
     description VARCHAR(512) DEFAULT NULL,
+    is_default  BOOL DEFAULT false,
     created     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     modified    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

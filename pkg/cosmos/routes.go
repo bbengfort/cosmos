@@ -55,11 +55,17 @@ func (s *Server) setupRoutes() (err error) {
 	s.router.NoRoute(s.NotFound)
 	s.router.NoMethod(s.NotAllowed)
 
-	// Add the v1 API routes (currently the only version)
+	// Add the v1 API routes
 	v1 := s.router.Group("/v1")
 	{
 		// Heartbeat route
 		v1.GET("/status", s.Status)
+
+		// Authentication routes
+		v1.POST("/register", s.Register)
+		v1.POST("/login", s.Login)
+		v1.POST("/logout", s.Logout)
+		v1.POST("/reauthenticate", s.Reauthenticate)
 	}
 
 	return nil

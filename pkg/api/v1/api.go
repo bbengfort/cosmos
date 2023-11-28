@@ -16,3 +16,34 @@ type StatusReply struct {
 	Uptime  string `json:"uptime,omitempty"`
 	Version string `json:"version,omitempty"`
 }
+
+//===========================================================================
+// Authentication Requests and Responses
+//===========================================================================
+
+type RegisterRequest struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type RegisterReply struct {
+	ID    int64  `json:"user_id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type LoginReply struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+type ReauthenticateRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}

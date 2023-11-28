@@ -1,10 +1,10 @@
 -- Populate the database with initial roles and permissions data
 BEGIN;
 
-INSERT INTO roles (id, title, description) VALUES
-    (1, 'Admin', 'Able to manage the cosmos API and other users on the server'),
-    (2, 'Player', 'Able to create games and play and manage games they belong to'),
-    (3, 'Observer', 'Only has read only access to the cosmos server')
+INSERT INTO roles (id, title, description, is_default) VALUES
+    (1, 'Admin', 'Able to manage the cosmos API and other users on the server', 'f'),
+    (2, 'Player', 'Able to create games and play and manage games they belong to', 't'),
+    (3, 'Observer', 'Only has read only access to the cosmos server', 'f')
 ;
 
 INSERT INTO permissions (id, title, description) VALUES
