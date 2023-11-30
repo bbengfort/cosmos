@@ -1,0 +1,48 @@
+version: "3"
+services:
+  db:
+    image: postgres:15
+    volumes:
+    - pgdata:/var/lib/db
+    init: true
+    restart: always
+    ports:
+    - 50432:5432
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=postgres
+    - POSTGRES_DB=cosmos
+
+  api:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        GIT_REVISION: ${GIT_REVISION}
+    image: bbengfort/cosmos-api
+    init: true
+    depends_on:
+    - db
+    ports:
+    - 8888:8888
+    environment:
+    - COSMOS_MAINTENANCE=false
+    - COSMOS_BIND_ADDR=:8888
+    - COSMOS_MODE=debug
+    - COSMOS_LOG_LEVEL=debug
+    - COSMOS_CONSOLE_LOG=true
+    - COSMOS_ALLOW_ORIGINS=http://localhost:8888
+    - COSMOS_DATABASE_URL=postgres://postgres:postgres@db:5432/cosmos?sslmode=disable
+    - COSMOS_DATABASE_READ_ONLY=false
+    - COSMOS_DATABASE_TESTING=false
+    - COSMOS_AUTH_KEYS=01HGH7S9V7G1WAR46N7R6M33WQ:run/secrets/01HGH7S9V7G1WAR46N7R6M33WQ.pem
+    - COSMOS_AUTH_COOKIE_DOMAIN=localhost
+    secrets:
+    - 01HGH7S9V7G1WAR46N7R6M33WQ.pem
+
+volumes:
+  pgdata:
+
+secrets:
+  01HGH7S9V7G1WAR46N7R6M33WQ.pem:
+    file: ./.secret/01HGH7S9V7G1WAR46N7R6M33WQ.pem

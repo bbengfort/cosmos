@@ -1,6 +1,11 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"log"
 	"os"
 	"text/tabwriter"
@@ -9,6 +14,7 @@ import (
 	"github.com/bbengfort/cosmos/pkg/config"
 	"github.com/bbengfort/cosmos/pkg/cosmos"
 	"github.com/joho/godotenv"
+	"github.com/oklog/ulid/v2"
 	confire "github.com/rotationalio/confire/usage"
 	"github.com/urfave/cli/v2"
 )
@@ -39,6 +45,25 @@ func main() {
 					Name:    "list",
 					Aliases: []string{"l"},
 					Usage:   "print in list mode instead of table mode",
+				},
+			},
+		},
+		{
+			Name:     "auth:tokenkey",
+			Usage:    "generate an RSA token key pair and ulid for JWT token signing",
+			Category: "utility",
+			Action:   authTokenKey,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "out",
+					Aliases: []string{"o"},
+					Usage:   "path to write keys out to (optional, will be saved as ulid.pem by default)",
+				},
+				&cli.IntFlag{
+					Name:    "size",
+					Aliases: []string{"s"},
+					Usage:   "number of bits for the generated keys",
+					Value:   4096,
 				},
 			},
 		},
@@ -78,5 +103,32 @@ func usage(c *cli.Context) (err error) {
 		return cli.Exit(err, 1)
 	}
 	tabs.Flush()
+	return nil
+}
+
+func authTokenKey(c *cli.Context) (err error) {
+	keyID := ulid.Make()
+
+	var key *rsa.PrivateKey
+	if key, err = rsa.GenerateKey(rand.Reader, c.Int("size")); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	var out string
+	if out = c.String("out"); out == "" {
+		out = fmt.Sprintf("%s.pem", keyID)
+	}
+
+	var f *os.File
+	if f, err = os.OpenFile(out, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600); err != nil {
+		return cli.Exit(err, 1)
+	}
+	defer f.Close()
+
+	if err = pem.Encode(f, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	fmt.Printf("RSA key id %s -- saved with PEM encoding to %s\n", keyID, out)
 	return nil
 }
