@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/bbengfort/cosmos/pkg/config"
