@@ -10,7 +10,7 @@ import (
 func TestMigrations(t *testing.T) {
 	migrations, err := db.Migrations()
 	require.NoError(t, err, "should have been able to load migrations")
-	require.GreaterOrEqual(t, len(migrations), 3, "wrong number of migrations, has a migration been added?")
+	require.GreaterOrEqual(t, len(migrations), 4, "wrong number of migrations, has a migration been added?")
 
 	// The first three migrations should match our fixtures
 	expected := []*db.Migration{
@@ -28,6 +28,11 @@ func TestMigrations(t *testing.T) {
 			ID:   2,
 			Name: "Default Roles",
 			Path: "0002_default_roles.sql",
+		},
+		{
+			ID:   3,
+			Name: "Galaxies",
+			Path: "0003_galaxies.sql",
 		},
 	}
 
