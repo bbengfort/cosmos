@@ -31,7 +31,7 @@ services:
     - COSMOS_MODE=debug
     - COSMOS_LOG_LEVEL=debug
     - COSMOS_CONSOLE_LOG=true
-    - COSMOS_ALLOW_ORIGINS=http://localhost:8888
+    - COSMOS_ALLOW_ORIGINS=http://localhost:3000
     - COSMOS_DATABASE_URL=postgres://postgres:postgres@db:5432/cosmos?sslmode=disable
     - COSMOS_DATABASE_READ_ONLY=false
     - COSMOS_DATABASE_TESTING=false

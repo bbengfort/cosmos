@@ -13,10 +13,11 @@ import (
 func (s *Server) setupRoutes() (err error) {
 	// Setup CORS configuration
 	corsConf := cors.Config{
-		AllowMethods: []string{"GET", "HEAD"},
-		AllowHeaders: []string{"Origin", "Content-Length", "Content-Type"},
-		AllowOrigins: s.conf.AllowOrigins,
-		MaxAge:       12 * time.Hour,
+		AllowMethods:     []string{"GET", "HEAD"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization", "X-CSRF-TOKEN"},
+		AllowOrigins:     s.conf.AllowOrigins,
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
 	}
 
 	// Application Middleware

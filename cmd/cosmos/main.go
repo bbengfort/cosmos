@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"database/sql"
 	"encoding/pem"
 	"fmt"
 	"log"
@@ -11,8 +13,11 @@ import (
 	"text/tabwriter"
 
 	"github.com/bbengfort/cosmos/pkg"
+	"github.com/bbengfort/cosmos/pkg/auth"
 	"github.com/bbengfort/cosmos/pkg/config"
 	"github.com/bbengfort/cosmos/pkg/cosmos"
+	"github.com/bbengfort/cosmos/pkg/db"
+	"github.com/bbengfort/cosmos/pkg/db/models"
 	"github.com/joho/godotenv"
 	"github.com/oklog/ulid/v2"
 	confire "github.com/rotationalio/confire/usage"
@@ -64,6 +69,32 @@ func main() {
 					Aliases: []string{"s"},
 					Usage:   "number of bits for the generated keys",
 					Value:   4096,
+				},
+			},
+		},
+		{
+			Name:     "auth:createsuperuser",
+			Usage:    "create an admin user",
+			Category: "utility",
+			Action:   authCreateSuperUser,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:     "name",
+					Aliases:  []string{"n"},
+					Usage:    "The name of the admin user",
+					Required: true,
+				},
+				&cli.StringFlag{
+					Name:     "email",
+					Aliases:  []string{"e"},
+					Usage:    "The email of the admin user",
+					Required: true,
+				},
+				&cli.StringFlag{
+					Name:     "password",
+					Aliases:  []string{"p"},
+					Usage:    "The password of the admin user",
+					Required: true,
 				},
 			},
 		},
@@ -130,5 +161,48 @@ func authTokenKey(c *cli.Context) (err error) {
 	}
 
 	fmt.Printf("RSA key id %s -- saved with PEM encoding to %s\n", keyID, out)
+	return nil
+}
+
+func authCreateSuperUser(c *cli.Context) (err error) {
+
+	var conf config.Config
+	if conf, err = config.New(); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	if err = db.Connect(conf.Database); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	user := &models.User{
+		Name:  sql.NullString{Valid: true, String: c.String("name")},
+		Email: c.String("email"),
+	}
+
+	if user.Password, err = auth.CreateDerivedKey(c.String("password")); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	// Create the user
+	ctx := context.Background()
+	if err = models.CreateUser(ctx, user); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	// Update the user role in the database
+	var tx *sql.Tx
+	if tx, err = db.BeginTx(ctx, &sql.TxOptions{ReadOnly: false}); err != nil {
+		return cli.Exit(err, 1)
+	}
+	defer tx.Rollback()
+
+	if _, err = tx.Exec("UPDATE users SET role_id=1 WHERE id=$1", user.ID); err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return cli.Exit(err, 1)
+	}
 	return nil
 }

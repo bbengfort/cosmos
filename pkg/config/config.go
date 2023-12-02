@@ -18,7 +18,7 @@ type Config struct {
 	Mode         string              `default:"release" desc:"one of debug, test, or release"`
 	LogLevel     logger.LevelDecoder `split_words:"true" default:"info" desc:"the verbosity of logging"`
 	ConsoleLog   bool                `split_words:"true" default:"false" desc:"human readable instead of json logging"`
-	AllowOrigins []string            `split_words:"true" default:"http://localhost:8888" desc:"origin of website accessing API"`
+	AllowOrigins []string            `split_words:"true" default:"http://localhost:3000" desc:"origin of website accessing API"`
 	Database     DatabaseConfig      `desc:"database configuration"`
 	Auth         AuthConfig          `desc:"authentication and claims issuer configuration"`
 	processed    bool                // set when the config is properly processed from the environment
@@ -32,8 +32,8 @@ type DatabaseConfig struct {
 
 type AuthConfig struct {
 	Keys            map[string]string `desc:"a map of key id to key path on disk"`
-	Audience        string            `default:"http://localhost:8888" desc:"value for the aud jwt claim"`
-	Issuer          string            `default:"http://localhost:8888" desc:"value for the iss jwt claim"`
+	Audience        string            `default:"http://localhost:3000" desc:"value for the aud jwt claim"`
+	Issuer          string            `default:"http://localhost:3000" desc:"value for the iss jwt claim"`
 	CookieDomain    string            `split_words:"true" default:"localhost" desc:"limit the cookies to the specified domain (same as allowed origins)"`
 	AccessTokenTTL  time.Duration     `split_words:"true" default:"24h" desc:"the amount of time before an access token expires"`
 	RefreshTokenTTL time.Duration     `split_words:"true" default:"48h" desc:"the amount of time before a refresh token expires"`
