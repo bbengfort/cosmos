@@ -70,55 +70,6 @@ func Authorize(permissions ...string) gin.HandlerFunc {
 	}
 }
 
-func Reauthenticate(issuer *ClaimsIssuer) gin.HandlerFunc {
-	reauthenticate := func(c *gin.Context) (err error) {
-		// Get the refresh token from the cookies or the headers of the request.
-		var refreshToken string
-		if refreshToken, err = GetRefreshToken(c); err != nil {
-			// If there is no refresh token, return no error.
-			return nil
-		}
-
-		// Check to ensure the refresh token is still valid.
-		// NOTE: this will also validate the not before and not after claims
-		if _, err = issuer.Verify(refreshToken); err != nil {
-			return err
-		}
-
-		// Get the access tokens to fetch the claims to refresh auth
-		var oldAccessToken string
-		if oldAccessToken, err = GetAccessToken(c); err != nil {
-			return err
-		}
-
-		// Parse the claims from the old access token
-		var claims *Claims
-		if claims, err = issuer.Parse(oldAccessToken); err != nil {
-			return nil
-		}
-
-		// Create new access and refresh tokens
-		var accessToken, newRefreshToken string
-		if accessToken, newRefreshToken, err = issuer.CreateTokens(claims); err != nil {
-			return err
-		}
-
-		// Set the new access and refresh cookies
-		if err = SetAuthCookies(c, accessToken, newRefreshToken, issuer.conf.CookieDomain); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	return func(c *gin.Context) {
-		if err := reauthenticate(c); err != nil {
-			log.Debug().Err(err).Msg("could not reauthenticate request")
-		}
-		c.Next()
-	}
-}
-
 // GetAccessToken retrieves the bearer token from the authorization header and parses it
 // to return only the JWT access token component of the header. Alternatively, if the
 // authorization header is not present, then the token is fetched from cookies. If the
