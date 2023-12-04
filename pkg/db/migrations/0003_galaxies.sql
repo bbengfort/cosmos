@@ -8,6 +8,9 @@ BEGIN;
 -- Describes the size of the galaxy for 2, 10, 20, 50, and 100 players respectively.
 CREATE TYPE SIZE AS ENUM ('small', 'medium', 'large', 'galactic', 'cosmic');
 
+-- Describes the current state of the game.
+CREATE TYPE GAME_STATE AS ENUM ('pending', 'playing', 'completed');
+
 -- Galaxies is the list of all games that are currently running.
 CREATE TABLE IF NOT EXISTS galaxies (
     id          SERIAL PRIMARY KEY,
@@ -16,6 +19,8 @@ CREATE TABLE IF NOT EXISTS galaxies (
     size        SIZE NOT NULL DEFAULT 'medium',
     max_players SMALLINT NOT NULL DEFAULT 10,
     max_turns   INTEGER NOT NULL DEFAULT 1000,
+    join_code   VARCHAR(16) NOT NULL UNIQUE,
+    game_state  GAME_STATE NOT NULL DEFAULT 'pending',
     created     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     modified    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT max_players_nonnegative CHECK (max_players > 0),

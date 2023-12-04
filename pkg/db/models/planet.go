@@ -1,12 +1,16 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/bbengfort/cosmos/pkg/enums"
+)
 
 type Planet struct {
 	ID          int64
 	SystemID    int64
 	Name        string
-	PlanetClass PlanetClass
+	PlanetClass enums.PlanetClass
 	IsHomeworld bool
 	Orbit       int16
 	Labs        int16

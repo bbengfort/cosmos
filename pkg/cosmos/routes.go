@@ -3,6 +3,7 @@ package cosmos
 import (
 	"time"
 
+	"github.com/bbengfort/cosmos/pkg/auth"
 	"github.com/bbengfort/cosmos/pkg/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -43,6 +44,9 @@ func (s *Server) setupRoutes() (err error) {
 		}
 	}
 
+	// Create authentication middleware to add to specific routes
+	authenticate := auth.Authenticate(s.auth)
+
 	// Kubernetes liveness probes
 	s.router.GET("/healthz", s.Healthz)
 	s.router.GET("/livez", s.Healthz)
@@ -63,6 +67,13 @@ func (s *Server) setupRoutes() (err error) {
 		v1.POST("/login", s.Login)
 		v1.POST("/logout", s.Logout)
 		v1.POST("/reauthenticate", s.Reauthenticate)
+
+		// Galaxy resource
+		galaxy := v1.Group("/galaxy", authenticate)
+		{
+			galaxy.GET("/", s.ListGalaxies)
+			galaxy.POST("/", s.CreateGalaxy)
+		}
 	}
 
 	return nil
