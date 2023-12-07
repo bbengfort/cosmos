@@ -8,27 +8,28 @@ import (
 
 	"github.com/bbengfort/cosmos/pkg/db"
 	"github.com/bbengfort/cosmos/pkg/enums"
+	"github.com/jmoiron/sqlx"
 )
 
 type Player struct {
-	GalaxyID     int64
-	PlayerID     int64
-	RoleID       int64
-	HomeSystemID int64
-	Name         string
-	Faction      enums.Faction
-	Character    enums.Characteristic
-	Created      time.Time
-	Modified     time.Time
+	GalaxyID     int64                `db:"galaxy_id"`
+	PlayerID     int64                `db:"player_id"`
+	RoleID       int64                `db:"role_id"`
+	HomeSystemID sql.NullInt64        `db:"home_system_id"`
+	Name         string               `db:"name"`
+	Faction      enums.Faction        `db:"faction"`
+	Character    enums.Characteristic `db:"character"`
+	Created      time.Time            `db:"created"`
+	Modified     time.Time            `db:"modified"`
 	role         *Role
 }
 
 const (
-	createPlayerSQL = "INSERT INTO players (galaxy_id, player_id, role_id, home_system_id, name, faction, character, created, modified) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+	createPlayerSQL = "INSERT INTO players (galaxy_id, player_id, role_id, home_system_id, name, faction, character, created, modified) VALUES (:galaxy_id, :player_id, :role_id, :home_system_id, :name, :faction, :character, :created, :modified)"
 )
 
 func CreatePlayer(ctx context.Context, player *Player) (err error) {
-	var tx *sql.Tx
+	var tx *sqlx.Tx
 	if tx, err = db.BeginTx(ctx, &sql.TxOptions{ReadOnly: false}); err != nil {
 		return err
 	}
@@ -46,17 +47,7 @@ func CreatePlayer(ctx context.Context, player *Player) (err error) {
 	player.Created = time.Now()
 	player.Modified = player.Created
 
-	if _, err = tx.Exec(createPlayerSQL,
-		player.GalaxyID,
-		player.PlayerID,
-		player.RoleID,
-		player.HomeSystemID,
-		player.Name,
-		player.Faction,
-		player.Character,
-		player.Created,
-		player.Modified,
-	); err != nil {
+	if _, err = tx.NamedExec(createPlayerSQL, player); err != nil {
 		return err
 	}
 	return tx.Commit()

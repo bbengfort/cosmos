@@ -18,6 +18,7 @@ import (
 	"github.com/bbengfort/cosmos/pkg/cosmos"
 	"github.com/bbengfort/cosmos/pkg/db"
 	"github.com/bbengfort/cosmos/pkg/db/models"
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	"github.com/oklog/ulid/v2"
 	confire "github.com/rotationalio/confire/usage"
@@ -191,7 +192,7 @@ func authCreateSuperUser(c *cli.Context) (err error) {
 	}
 
 	// Update the user role in the database
-	var tx *sql.Tx
+	var tx *sqlx.Tx
 	if tx, err = db.BeginTx(ctx, &sql.TxOptions{ReadOnly: false}); err != nil {
 		return cli.Exit(err, 1)
 	}

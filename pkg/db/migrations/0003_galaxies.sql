@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS players (
     galaxy_id       INTEGER NOT NULL,
     player_id       INTEGER NOT NULL,
     role_id         INTEGER NOT NULL DEFAULT 2,
-    home_system_id  INTEGER NOT NULL,
+    home_system_id  INTEGER DEFAULT NULL,
     name            VARCHAR(255) NOT NULL DEFAULT '',
     faction         FACTION NOT NULL DEFAULT 'harmony',
     character       CHARACTERISTIC NOT NULL DEFAULT 'warrior',

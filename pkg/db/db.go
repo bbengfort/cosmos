@@ -8,6 +8,7 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/bbengfort/cosmos/pkg/config"
@@ -15,7 +16,7 @@ import (
 
 var (
 	readonly bool            // if true, only allow database reads
-	conn     *sql.DB         // connection pool to the DB managed by the package
+	conn     *sqlx.DB        // connection pool to the DB managed by the package
 	connmu   sync.RWMutex    // synchronize connect and close DB connection
 	connect  sync.Once       // ensure that the database is only connected to once
 	mock     sqlmock.Sqlmock // mock for unit testing modules that use the database
@@ -36,15 +37,8 @@ func Connect(conf config.DatabaseConfig) (err error) {
 
 	// Ensure that the connect function is only called once.
 	connect.Do(func() {
-		if conf.Testing {
-			// Create a sqlmock for testing purposes
-			readonly = conf.ReadOnly
-			conn, mock, err = sqlmock.New()
-			return
-		}
-
 		readonly = conf.ReadOnly
-		if conn, err = sql.Open("postgres", conf.URL); err != nil {
+		if conn, err = sqlx.Open("postgres", conf.URL); err != nil {
 			return
 		}
 
@@ -81,7 +75,7 @@ func Close() (err error) {
 }
 
 // BeginTx creates a transaction with the connected dtabase; errors if not connected.
-func BeginTx(ctx context.Context, opts *sql.TxOptions) (tx *sql.Tx, err error) {
+func BeginTx(ctx context.Context, opts *sql.TxOptions) (tx *sqlx.Tx, err error) {
 	connmu.RLock()
 	if conn == nil {
 		connmu.RUnlock()
@@ -95,7 +89,7 @@ func BeginTx(ctx context.Context, opts *sql.TxOptions) (tx *sql.Tx, err error) {
 		return nil, ErrReadOnly
 	}
 
-	tx, err = conn.BeginTx(ctx, opts)
+	tx, err = conn.BeginTxx(ctx, opts)
 	connmu.RUnlock()
 	return tx, err
 }

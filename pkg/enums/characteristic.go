@@ -51,9 +51,9 @@ func (c *Characteristic) Scan(value interface{}) error {
 
 	// Convert the value to a string
 	if sv, err := driver.String.ConvertValue(value); err == nil {
-		if v, ok := sv.(string); ok {
+		if v, ok := sv.([]byte); ok {
 			// Parse the value of v
-			switch v {
+			switch string(v) {
 			case "unknown":
 				*c = UnknownCharacteristic
 			case "benevolent":

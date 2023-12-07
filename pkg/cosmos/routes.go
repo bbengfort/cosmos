@@ -71,8 +71,8 @@ func (s *Server) setupRoutes() (err error) {
 		// Galaxy resource
 		galaxy := v1.Group("/galaxy", authenticate)
 		{
-			galaxy.GET("/", s.ListGalaxies)
-			galaxy.POST("/", s.CreateGalaxy)
+			galaxy.GET("/", s.ListGalaxies, auth.Authorize("games:read"))
+			galaxy.POST("/", s.CreateGalaxy, auth.Authorize("games:create"))
 		}
 	}
 

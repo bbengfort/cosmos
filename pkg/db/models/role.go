@@ -7,31 +7,32 @@ import (
 	"time"
 
 	"github.com/bbengfort/cosmos/pkg/db"
+	"github.com/jmoiron/sqlx"
 )
 
 const defaultRole = "DefaultRole"
 
 type Role struct {
-	ID          int64
-	Title       string
-	Description sql.NullString
-	IsDefault   bool
-	Created     time.Time
-	Modified    time.Time
+	ID          int64          `db:"id"`
+	Title       string         `db:"title"`
+	Description sql.NullString `db:"description"`
+	IsDefault   bool           `db:"is_default"`
+	Created     time.Time      `db:"created"`
+	Modified    time.Time      `db:"modified"`
 	permissions []*Permission
 }
 
 type Permission struct {
-	ID          int64
-	Title       string
-	Description sql.NullString
-	Created     time.Time
-	Modified    time.Time
+	ID          int64          `db:"id"`
+	Title       string         `db:"title"`
+	Description sql.NullString `db:"description"`
+	Created     time.Time      `db:"created"`
+	Modified    time.Time      `db:"modified"`
 }
 
 // Get role by ID (int64) or by title (string).
 func GetRole(ctx context.Context, nameOrID any) (role *Role, err error) {
-	var tx *sql.Tx
+	var tx *sqlx.Tx
 	if tx, err = db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true}); err != nil {
 		return nil, err
 	}
@@ -46,7 +47,7 @@ func GetRole(ctx context.Context, nameOrID any) (role *Role, err error) {
 }
 
 // Get role by ID (int64) or by title (string) from any transaction.
-func getRole(tx *sql.Tx, nameOrID any) (role *Role, err error) {
+func getRole(tx *sqlx.Tx, nameOrID any) (role *Role, err error) {
 	var query string
 	params := []interface{}{nameOrID}
 
@@ -82,7 +83,7 @@ func getRole(tx *sql.Tx, nameOrID any) (role *Role, err error) {
 // directly, otherwise the database is queried to populate the permissions.
 func (r *Role) Permissions(ctx context.Context) (_ []*Permission, err error) {
 	if r.permissions == nil {
-		var tx *sql.Tx
+		var tx *sqlx.Tx
 		if tx, err = db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true}); err != nil {
 			return nil, err
 		}
@@ -100,7 +101,7 @@ const (
 	getRolePerms = "SELECT p.id, p.title, p.description, p.created, p.modified FROM role_permissions rp JOIN permissions p on rp.permission_id=p.id WHERE rp.role_id=$1"
 )
 
-func (r *Role) getPermissions(tx *sql.Tx) (err error) {
+func (r *Role) getPermissions(tx *sqlx.Tx) (err error) {
 	r.permissions = make([]*Permission, 0, 4)
 
 	var rows *sql.Rows

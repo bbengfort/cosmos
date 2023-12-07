@@ -7,28 +7,29 @@ import (
 	"time"
 
 	"github.com/bbengfort/cosmos/pkg/db"
+	"github.com/jmoiron/sqlx"
 )
 
 type User struct {
-	ID        int64
-	Name      sql.NullString
-	Email     string
-	Password  string
-	RoleID    sql.NullInt64
-	LastLogin sql.NullTime
-	Created   time.Time
-	Modified  time.Time
+	ID        int64          `db:"id"`
+	Name      sql.NullString `db:"name"`
+	Email     string         `db:"email"`
+	Password  string         `db:"password"`
+	RoleID    sql.NullInt64  `db:"role_id"`
+	LastLogin sql.NullTime   `db:"last_login"`
+	Created   time.Time      `db:"created"`
+	Modified  time.Time      `db:"modified"`
 	role      *Role
 }
 
 const (
-	createUserSQL     = "INSERT INTO users (name, email, password, role_id, last_login) VALUES ($1, $2, $3, $4, $5);"
+	createUserSQL     = "INSERT INTO users (name, email, password, role_id, last_login) VALUES (:name, :email, :password, :role_id, :last_login);"
 	popCreatedUserSQL = "SELECT id, created, modified FROM users WHERE email=$1"
 )
 
 // Create a new user in the database.
 func CreateUser(ctx context.Context, user *User) (err error) {
-	var tx *sql.Tx
+	var tx *sqlx.Tx
 	if tx, err = db.BeginTx(ctx, &sql.TxOptions{ReadOnly: false}); err != nil {
 		return err
 	}
@@ -44,12 +45,12 @@ func CreateUser(ctx context.Context, user *User) (err error) {
 	user.RoleID = sql.NullInt64{Valid: true, Int64: user.role.ID}
 
 	// Execute the insert query
-	if _, err = tx.Exec(createUserSQL, user.Name, user.Email, user.Password, user.RoleID, user.LastLogin); err != nil {
+	if _, err = tx.NamedExec(createUserSQL, user); err != nil {
 		return err
 	}
 
 	// Populate the final fields for creating the user
-	if err = tx.QueryRow(popCreatedUserSQL, user.Email).Scan(&user.ID, &user.Created, &user.Modified); err != nil {
+	if err = tx.QueryRowx(popCreatedUserSQL, user.Email).StructScan(user); err != nil {
 		return err
 	}
 
@@ -58,7 +59,7 @@ func CreateUser(ctx context.Context, user *User) (err error) {
 
 // Get user by ID (int64) or by email (string).
 func GetUser(ctx context.Context, id any) (u *User, err error) {
-	var tx *sql.Tx
+	var tx *sqlx.Tx
 	if tx, err = db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true}); err != nil {
 		return nil, err
 	}
@@ -75,10 +76,7 @@ func GetUser(ctx context.Context, id any) (u *User, err error) {
 	}
 
 	u = &User{}
-	if err = tx.QueryRow(query, id).Scan(
-		&u.ID, &u.Name, &u.Email, &u.Password, &u.RoleID,
-		&u.LastLogin, &u.Created, &u.Modified,
-	); err != nil {
+	if err = tx.QueryRowx(query, id).StructScan(u); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +91,7 @@ func GetUser(ctx context.Context, id any) (u *User, err error) {
 
 func (u *User) Role(ctx context.Context) (_ *Role, err error) {
 	if u.role == nil {
-		var tx *sql.Tx
+		var tx *sqlx.Tx
 		if tx, err = db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true}); err != nil {
 			return nil, err
 		}
@@ -115,17 +113,17 @@ func (u *User) Permissions(ctx context.Context) (_ []*Permission, err error) {
 	return role.Permissions(ctx)
 }
 
-const updateLastLoginSQL = "UPDATE users SET last_login=$1 WHERE id=$2"
+const updateLastLoginSQL = "UPDATE users SET last_login=:last_login WHERE id=:id"
 
 func (u *User) LoggedIn(ctx context.Context) (err error) {
-	var tx *sql.Tx
+	var tx *sqlx.Tx
 	if tx, err = db.BeginTx(ctx, &sql.TxOptions{ReadOnly: false}); err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
 	u.LastLogin = sql.NullTime{Valid: true, Time: time.Now()}
-	if _, err = tx.Exec(updateLastLoginSQL, u.LastLogin, u.ID); err != nil {
+	if _, err = tx.NamedExec(updateLastLoginSQL, u); err != nil {
 		return err
 	}
 	return tx.Commit()
