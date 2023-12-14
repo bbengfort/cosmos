@@ -34,7 +34,7 @@ const (
 	Yp
 )
 
-var planetClassNames = []string{"UNKNOWN", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "U", "X", "Y"}
+var planetClassNames = [23]string{"UNKNOWN", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "U", "X", "Y"}
 
 // =====================================================================================
 // Stringer interface

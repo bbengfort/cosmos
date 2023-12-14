@@ -15,7 +15,7 @@ const (
 	Completed
 )
 
-var gameStateNames = []string{"unknown", "pending", "playing", "completed"}
+var gameStateNames = [4]string{"unknown", "pending", "playing", "completed"}
 
 //=====================================================================================
 // Stringer interface

@@ -15,7 +15,7 @@ const (
 	Purity
 )
 
-var factionNames = []string{"unknown", "supremacy", "harmony", "purity"}
+var factionNames = [4]string{"unknown", "supremacy", "harmony", "purity"}
 
 //=====================================================================================
 // Stringer interface

@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS planets (
     planet_class    PLANET_CLASS NOT NULL DEFAULT 'M',
     is_homeworld    BOOLEAN NOT NULL DEFAULT 'f',
     orbit           SMALLINT NOT NULL DEFAULT 8,
+    orbital_speed   FLOAT NOT NULL DEFAULT 3.0,  -- turns per revolution
     labs            SMALLINT NOT NULL DEFAULT 0,
     tech            INTEGER NOT NULL DEFAULT 0,
     mines           SMALLINT NOT NULL DEFAULT 0,

@@ -3,9 +3,13 @@ package enums
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
+// Size indicates the game size, which defines the maximum number of players, the
+// maximum number of turns, as well as the the number of systems that are generated in
+// the galaxy. The size of a galaxy cannot be changed once it is created.
 type Size uint8
 
 const (
@@ -17,7 +21,44 @@ const (
 	Cosmic
 )
 
-var sizeNames = []string{"unknown", "small", "medium", "large", "galactic", "cosmic"}
+var sizeNames = [6]string{"unknown", "small", "medium", "large", "galactic", "cosmic"}
+
+//=====================================================================================
+// Size Specific Methods
+//=====================================================================================
+
+// MaxPlayers returns a constant number of players based on the size.
+func (s Size) MaxPlayers() int16 {
+	switch s {
+	case UnknownSize:
+		return 0
+	case Small:
+		return 2
+	case Medium:
+		return 10
+	case Large:
+		return 20
+	case Galactic:
+		return 50
+	case Cosmic:
+		return 100
+	default:
+		panic(fmt.Errorf("unknown size %v", s))
+	}
+}
+
+var (
+	minSystems = [6]int{0, 20, 100, 200, 500, 1000}
+	maxSystems = [6]int{0, 40, 200, 400, 1000, 2000}
+)
+
+// NumSystems returns a random number of systems based on a range given by the size.
+// Multiple calls to this function will return different numbers of systems bounded by
+// the size of the galaxy.
+func (s Size) NumSystems() int {
+	mins, maxs := minSystems[s], maxSystems[s]
+	return random.Intn(maxs-mins+1) + mins
+}
 
 //=====================================================================================
 // Stringer interface

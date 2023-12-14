@@ -20,7 +20,7 @@ const (
 	Economist
 )
 
-var characteristicNames = []string{"unknown", "benevolent", "progressive", "humanitarian", "charismatic", "industrialist", "diplomat", "warrior", "economist"}
+var characteristicNames = [9]string{"unknown", "benevolent", "progressive", "humanitarian", "charismatic", "industrialist", "diplomat", "warrior", "economist"}
 
 //=====================================================================================
 // Stringer interface

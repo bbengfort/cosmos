@@ -86,18 +86,7 @@ func (s *Server) CreateGalaxy(c *gin.Context) {
 	}
 
 	// Set the max players based on game size
-	switch galaxy.Size {
-	case enums.Small:
-		galaxy.MaxPlayers = 2
-	case enums.Medium:
-		galaxy.MaxPlayers = 10
-	case enums.Large:
-		galaxy.MaxPlayers = 20
-	case enums.Galactic:
-		galaxy.MaxPlayers = 50
-	case enums.Cosmic:
-		galaxy.MaxPlayers = 100
-	}
+	galaxy.MaxPlayers = galaxy.Size.MaxPlayers()
 
 	// Create the galaxy
 	if err = models.CreateGalaxy(c.Request.Context(), galaxy); err != nil {

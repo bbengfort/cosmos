@@ -19,7 +19,7 @@ const (
 	Ms
 )
 
-var starClassNames = []string{"UNKNOWN", "O", "B", "A", "F", "G", "K", "M"}
+var starClassNames = [8]string{"UNKNOWN", "O", "B", "A", "F", "G", "K", "M"}
 
 //=====================================================================================
 // Stringer interface
